@@ -1,5 +1,6 @@
 package de.dobermai.lock;
 
+import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
@@ -12,12 +13,23 @@ import java.io.Serializable;
 @Interceptor
 public class LockInterceptor implements Serializable {
 
+    @Inject
+    LockImpl impl;
+
     @AroundInvoke
     public Object intercept(InvocationContext ic) throws Throwable {
 
-        System.out.println("YEEEP");
-       // final Lock annotation = ic.getTarget().getClass().getAnnotation(Lock.class);
-        System.out.println("Lock!");
-        return ic.proceed();
+        final boolean lock = impl.getLock();
+        if (lock) {
+            try {
+                return ic.proceed();
+            }
+            // final Lock annotation = ic.getTarget().getClass().getAnnotation(Lock.class);
+            finally {
+                impl.releaseLock();
+            }
+        } else {
+            return null;
+        }
     }
 }
